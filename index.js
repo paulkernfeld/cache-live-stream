@@ -16,13 +16,19 @@ function CacheLiveStream (db, makeStream) {
   var counter = new BN(0)
 
   this.dbReadStream = db.createReadStream({keys: true, values: true, valueEncoding: 'json'})
-  var dbWriteStream = LevelWriteStream(db)({'valueEncoding': 'json'})
+  var dbWriteStream = LevelWriteStream(db)({valueEncoding: 'json'})
 
   this.dbReadStream.on('end', function () {
+    debug('finished with db')
     makeStream(value, function (err, stream) {
       assert.ifError(err)
+      debug('made stream')
       self.madeStream = stream
       self.madeStream.pipe(self.readable)
+      self.madeStream.on('end', function () {
+        debug('made stream ended')
+        self.close()
+      })
     })
   })
 
