@@ -15,7 +15,7 @@ function CacheLiveStream (db, makeStream) {
   // Use BN to lexicographically order our levelup keys
   var counter = new BN(0)
 
-  this.dbReadStream = db.createReadStream({keys: true, values: true, valueEncoding: 'json'})
+  this.dbReadStream = db.createReadStream({keys: true, values: true, keyEncoding: 'binary', valueEncoding: 'json'})
   var dbWriteStream = LevelWriteStream(db)({valueEncoding: 'json'})
 
   this.dbReadStream.on('end', function () {
