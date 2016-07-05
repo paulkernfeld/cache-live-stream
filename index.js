@@ -3,7 +3,7 @@ var assert = require('assert')
 var through2 = require('through2')
 var LevelWriteStream = require('level-write-stream')
 var BN = require('bn.js')
-var debug = require('debug')('stream-persist')
+var debug = require('debug')('cache-live-stream')
 
 function CacheLiveStream (db, makeStream) {
   if (!(this instanceof CacheLiveStream)) return new CacheLiveStream(db, makeStream)
