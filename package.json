@@ -1,6 +1,6 @@
 {
   "name": "cache-live-stream",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cache append-only live streams using levelup",
   "homepage": "https://github.com/paulkernfeld/cache-live-stream",
   "bugs": {
