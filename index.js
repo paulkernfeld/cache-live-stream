@@ -18,6 +18,9 @@ function CacheLiveStream (db, makeStream) {
   this.dbReadStream = db.createReadStream({keys: true, values: true, keyEncoding: 'binary', valueEncoding: 'json'})
   var dbWriteStream = LevelWriteStream(db)({valueEncoding: 'json'})
 
+  // Silence warning from https://github.com/Raynos/level-write-stream/issues/3
+  dbWriteStream.setMaxListeners(1000)
+
   this.dbReadStream.on('end', function () {
     debug('finished with db')
     makeStream(value, function (err, stream) {
