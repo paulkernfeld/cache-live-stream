@@ -41,7 +41,6 @@ function CacheLiveStream (db, makeStream) {
       // Reading from the DB
       counter = new BN(obj.key.toString('hex'), 16, 'be')
       value = obj.value
-      debug('from db', value, 'counter is', counter.toNumber())
     } else {
       // Reading from the real stream
       value = obj
@@ -50,7 +49,6 @@ function CacheLiveStream (db, makeStream) {
         key: counter.toBuffer('be', 8),
         value: value
       })
-      debug('from live stream', value, 'counter is', counter.toNumber())
     }
 
     this.push(value)
