@@ -46,7 +46,7 @@ function CacheLiveStream (db, makeStream) {
       value = obj
       counter = counter.bincn(0)
       dbWriteStream.write({
-        key: counter.toBuffer('be', 8),
+        key: counter.toArrayLike(Buffer, 'be', 8),
         value: value
       })
     }
