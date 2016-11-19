@@ -35,18 +35,19 @@ function CacheLiveStream (db, makeStream) {
     })
   })
 
+  // Store keys as binary-encoded strings to make both Level.js and LevelDOWN happy.
   var value
   this.readable = through2.obj(function (obj, enc, cb) {
     if (!self.madeStream) {
       // Reading from the DB
-      counter = new BN(obj.key.toString('hex'), 16, 'be')
+      counter = new BN(Buffer(obj.key).toString('hex'), 16, 'be')
       value = obj.value
     } else {
       // Reading from the real stream
       value = obj
       counter = counter.bincn(0)
       dbWriteStream.write({
-        key: counter.toArrayLike(Buffer, 'be', 8),
+        key: counter.toArrayLike(Buffer, 'be', 8).toString('binary'),
         value: value
       })
     }
