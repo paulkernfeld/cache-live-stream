@@ -1,25 +1,26 @@
 var assert = require('assert')
 
-var through2 = require('through2')
-var LevelWriteStream = require('level-write-stream')
 var BN = require('bn.js')
 var debug = require('debug')('cache-live-stream')
+var mapStream = require('map-stream')
 
-function CacheLiveStream (db, makeStream) {
-  if (!(this instanceof CacheLiveStream)) return new CacheLiveStream(db, makeStream)
+function CacheLiveStream (db, makeStream, opts) {
+  if (!(this instanceof CacheLiveStream)) return new CacheLiveStream(db, makeStream, opts)
   var self = this
+
+  opts = opts || {}
+  // The deserializer defaults to doing nothing
+  var deserialize = opts.deserialize || function (v) { return v }
+
   this.madeStream = null
 
   debug('new')
 
   // Use BN to lexicographically order our levelup keys
   var counter = new BN(0)
+  var value
 
   this.dbReadStream = db.createReadStream({keys: true, values: true, keyEncoding: 'binary', valueEncoding: 'json'})
-  var dbWriteStream = LevelWriteStream(db)({valueEncoding: 'json'})
-
-  // Silence warning from https://github.com/Raynos/level-write-stream/issues/3
-  dbWriteStream.setMaxListeners(1000)
 
   this.dbReadStream.on('end', function () {
     debug('finished with db')
@@ -28,41 +29,40 @@ function CacheLiveStream (db, makeStream) {
       debug('made stream')
       self.madeStream = stream
       self.madeStream.pipe(self.readable)
-      self.madeStream.on('end', function () {
-        debug('made stream ended')
-        self.close()
-      })
     })
   })
 
   // Store keys as binary-encoded strings to make both Level.js and LevelDOWN happy.
-  var value
-  this.readable = through2.obj(function (obj, enc, cb) {
+  this.readable = mapStream(function (obj, cb) {
     if (!self.madeStream) {
       // Reading from the DB
       counter = new BN(Buffer.from(obj.key).toString('hex'), 16, 'be')
       value = obj.value
+      cb(null, deserialize(value))
     } else {
-      // Reading from the real stream
-      value = obj
+      // Reading from the real stream, writing to the DB
       counter = counter.bincn(0)
-      dbWriteStream.write({
-        key: counter.toArrayLike(Buffer, 'be', 8).toString('binary'),
-        value: value
-      })
+      db.put(
+        counter.toArrayLike(Buffer, 'be', 8).toString('binary'),
+        obj,
+        {},
+        function (err) {
+          value = obj
+          cb(err, deserialize(obj))
+        })
     }
-
-    this.push(value)
-    cb()
   })
-  this.dbReadStream.pipe(this.readable, {end: false})
+
+  this.dbReadStream.pipe(this.readable, { end: false })
 }
 
 CacheLiveStream.prototype.close = function () {
   debug('closing')
   if (this.madeStream) {
+    debug('unpiping made stream')
     this.madeStream.unpipe(this.readable)
   } else {
+    debug('unpiping db read stream')
     this.dbReadStream.unpipe(this.readable)
   }
 }

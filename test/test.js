@@ -6,15 +6,19 @@ var toArray = require('stream-to-array')
 
 var CacheLiveStream = require('..')
 
-var runTest = function (testName, db) {
-  tape(testName, function (t) {
+var runTest = function (opts) {
+  tape(opts.testName, function (t) {
     // Make a CLS and put 0...999 into it
     var expected1 = []
     for (var j = 0; j < 1000; j++) {
-      expected1.push(j)
+      if (opts.deserialize) {
+        expected1.push(opts.deserialize(j))
+      } else {
+        expected1.push(j)
+      }
     }
     var makeStream1 = function (last, cb) {
-      t.same(last, undefined)
+      t.same(last, undefined, 'last #1 should be undefined')
 
       var i = 0
       cb(null, from2.obj(function (size, next) {
@@ -25,20 +29,24 @@ var runTest = function (testName, db) {
         }
       }))
     }
-    var cls1 = CacheLiveStream(db, makeStream1)
+    var cls1 = CacheLiveStream(opts.db, makeStream1, { deserialize: opts.deserialize })
     toArray(cls1.readable, function (err, arr) {
-      t.ifErr(err)
-      t.same(arr, expected1)
+      t.ifErr(err, 'no error on #1')
+      t.same(arr, expected1, '#1 correct values')
     })
 
     cls1.readable.on('end', function () {
       // Make a CLS and put 1000...2000 into it
       var expected2 = []
       for (var j = 0; j < 2000; j++) {
-        expected2.push(j)
+        if (opts.deserialize) {
+          expected2.push(opts.deserialize(j))
+        } else {
+          expected2.push(j)
+        }
       }
       var makeStream2 = function (last, cb) {
-        t.same(last, 999)
+        t.same(last, 999, 'last #2 should be 999')
 
         var i = 1000
         cb(null, from2.obj(function (size, next) {
@@ -50,16 +58,27 @@ var runTest = function (testName, db) {
         }))
       }
 
-      var cls2 = CacheLiveStream(db, makeStream2)
+      var cls2 = CacheLiveStream(opts.db, makeStream2, { deserialize: opts.deserialize })
 
       toArray(cls2.readable, function (err, arr) {
-        t.ifErr(err)
-        t.same(arr, expected2)
+        t.ifErr(err, 'no error on #2')
+        t.same(arr, expected2, '#2 correct values')
         t.end()
       })
     })
   })
 }
 
-runTest('memdb', memdb())
-runTest('level-browserify', level('test.db'))
+runTest({
+  testName: 'memdb',
+  db: memdb()
+})
+runTest({
+  testName: 'deserialize',
+  db: memdb(),
+  deserialize: function (v) { return v * 2 }
+})
+runTest({
+  testName: 'level-browserify',
+  db: level('test.db')
+})
