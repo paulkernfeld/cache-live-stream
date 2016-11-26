@@ -16,7 +16,9 @@
   "scripts": {
     "posttest": "rm -rf test.db",
     "pretest": "rm -rf test.db",
-    "test": "standard && tape test/*.js && browserify test/*.js | tape-run"
+    "test": "standard && npm run test-node && npm run test-browser",
+    "test-browser": "browserify test/*.js | tape-run",
+    "test-node": "tape test/*.js"
   },
   "dependencies": {
     "bn.js": "^4.11.3",
