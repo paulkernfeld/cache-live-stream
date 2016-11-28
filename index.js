@@ -11,6 +11,7 @@ function CacheLiveStream (db, makeStream, opts) {
   opts = opts || {}
   // The deserializer defaults to doing nothing
   var deserialize = opts.deserialize || function (v) { return v }
+  var keyEncoding = opts.keyEncoding || 'binary'
 
   this.madeStream = null
 
@@ -32,18 +33,20 @@ function CacheLiveStream (db, makeStream, opts) {
     })
   })
 
-  // Store keys as binary-encoded strings to make both Level.js and LevelDOWN happy.
+  // Store keys as strings to make both Level.js and LevelDOWN happy.
   this.readable = mapStream(function (obj, cb) {
     if (!self.madeStream) {
       // Reading from the DB
-      counter = new BN(Buffer.from(obj.key).toString('hex'), 16, 'be')
+      counter = new BN(Buffer.from(obj.key, keyEncoding).toString('hex'), 16, 'be')
       value = obj.value
       cb(null, deserialize(value))
     } else {
       // Reading from the real stream, writing to the DB
+      // console.log(counter.toArrayLike(Buffer, 'be').toString('hex'))
       counter = counter.bincn(0)
+      // console.log(counter.toArrayLike(Buffer, 'be').toString('hex'))
       db.put(
-        counter.toArrayLike(Buffer, 'be', 8).toString('binary'),
+        counter.toArrayLike(Buffer, 'be', 8).toString(keyEncoding),
         obj,
         {},
         function (err) {

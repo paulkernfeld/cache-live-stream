@@ -25,6 +25,7 @@ Arguments:
 - Arg #2 is a function that asynchronously returns a new live stream, starting where the cache left off. Your live stream must produce serialized values that can be saved as values in the db.
 - Arg #3 contains options:
   - `deserialize` is an optional synchronous function that lets you deserialize elements.
+  - `keyEncoding` is an optional arg for how to encode keys
 
 `cacheLiveStream.readable` is a readable stream that emits all elements of the live stream, including cached elements and live elements.
 
