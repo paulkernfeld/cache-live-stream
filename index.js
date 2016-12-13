@@ -38,8 +38,8 @@ function CacheLiveStream (db, makeStream, opts) {
     if (!self.madeStream) {
       // Reading from the DB
       counter = new BN(Buffer.from(obj.key, keyEncoding).toString('hex'), 16, 'be')
-      value = obj.value
-      cb(null, deserialize(value))
+      value = deserialize(obj.value)
+      cb(null, value)
     } else {
       // Reading from the real stream, writing to the DB
       // console.log(counter.toArrayLike(Buffer, 'be').toString('hex'))
@@ -50,8 +50,8 @@ function CacheLiveStream (db, makeStream, opts) {
         obj,
         {},
         function (err) {
-          value = obj
-          cb(err, deserialize(obj))
+          value = deserialize(obj)
+          cb(err, value)
         })
     }
   })

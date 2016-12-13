@@ -46,7 +46,7 @@ var runTest = function (opts) {
         }
       }
       var makeStream2 = function (last, cb) {
-        t.same(last, 999, 'last #2 should be 999')
+        t.same(last, opts.last)
 
         var i = 1000
         cb(null, from2.obj(function (size, next) {
@@ -71,14 +71,17 @@ var runTest = function (opts) {
 
 runTest({
   testName: 'memdb',
-  db: memdb()
+  db: memdb(),
+  last: 999
 })
 runTest({
   testName: 'deserialize',
   db: memdb(),
-  deserialize: function (v) { return v * 2 }
+  last: { wrap: 999 },
+  deserialize: function (v) { return { wrap: v } }
 })
 runTest({
   testName: 'level-browserify',
-  db: level('test.db')
+  db: level('test.db'),
+  last: 999
 })
